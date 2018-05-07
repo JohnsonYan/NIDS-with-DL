@@ -7,10 +7,38 @@ from sklearn.model_selection import train_test_split
 from sklearn import metrics
 from keras.models import Sequential, load_model
 from keras.layers.core import Dense, Activation, Dropout
-from keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard
+from keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard, Callback
 from keras.layers.normalization import BatchNormalization
 
+from sklearn.metrics import f1_score, precision_score, recall_score
+from keras import regularizers
+from keras.utils import plot_model
+              
 from helpfulTools import *
+
+
+class Metrics(Callback):
+    def on_train_begin(self, logs={}):
+        self.val_f1s = []
+        self.val_recalls = []
+        self.val_precisions = []
+
+    def on_epoch_end(self, epoch, logs={}):
+        val_predict = (np.asarray(self.model.predict(
+            self.validation_data[0]))).round()
+        val_targ = self.validation_data[1]
+        _val_f1 = f1_score(val_targ, val_predict)
+        _val_recall = recall_score(val_targ, val_predict)
+        _val_precision = precision_score(val_targ, val_predict)
+        self.val_f1s.append(_val_f1)
+        self.val_recalls.append(_val_recall)
+        self.val_precisions.append(_val_precision)
+        return
+
+    def print_metrics(self):
+        print('f1:\t',self.val_f1s)
+        print('recall:\t',self.val_recalls)
+        print('precision:\t',self.val_precisions)
 
 
 def init_data(inputfile, outputfile):
@@ -28,7 +56,6 @@ def init_data(inputfile, outputfile):
 
     print("Read {} rows.".format(len(df)))
     # df = df.sample(frac=0.1, replace=False) # Uncomment this line to sample only 10% of the dataset
-    #df.dropna(inplace=True,axis=1) # For now, just drop NA's (rows with missing values)
     # The CSV file has no column heads, so add them
     df.columns = [
         'duration',
@@ -159,7 +186,6 @@ def init_data(inputfile, outputfile):
     # display 5 rows
     print(df[0:5])
 
-
     # Now encode the feature vector
     encode_numeric_range(df,'duration',normalized_low=0, normalized_high=1)
     encode_numeric_range(df,'src_bytes',normalized_low=0, normalized_high=1)
@@ -214,6 +240,7 @@ def start():
     # df = pd.read_csv('./dataset/train.csv')
     df_test = pd.read_csv('./dataset/test.csv')
     #df_test = pd.read_csv('./dataset/train.csv')
+
     # Break into X (predictors) & y (prediction)
     x, y = to_xy(df,'outcome')
     # x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.25, random_state=6)
@@ -221,82 +248,55 @@ def start():
     print('x,y:', x.shape, y.shape)
     print('x_test,y_test:', x_test.shape, y_test.shape)
 
+    # build model
     model = Sequential()
-    dropout = 0.75
+    DROPOUT = 0.5
 
-    # 1：
-    model.add(Dense(10, input_dim=x.shape[1], kernel_initializer='normal', activation='relu'))
-    model.add(Dense(50, input_dim=x.shape[1], kernel_initializer='normal', activation='relu'))
-    model.add(Dense(10, input_dim=x.shape[1], kernel_initializer='normal', activation='relu'))
-    model.add(Dense(1, kernel_initializer='normal'))
-    model.add(Dense(y.shape[1],activation='softmax'))
-    model.compile(loss='categorical_crossentropy', optimizer='adam')
-    monitor = EarlyStopping(monitor='val_loss', min_delta=1e-3, patience=5, verbose=1, mode='auto')
-    model.fit(x,y,validation_data=(x_test,y_test),callbacks=[monitor],verbose=2,epochs=1000)
-    # 2:
-    # model.add(Dense(122, input_dim=x.shape[1], activation='relu', kernel_initializer='normal'))
-    # model.add(Dropout(0.5))
-    # model.add(Dense(80, activation='relu', kernel_initializer='normal'))
-    # model.add(Dropout(0.5))
-    # model.add(Dense(50, activation='relu', kernel_initializer='normal'))
-    # model.add(Dropout(0.5))
-    # model.add(Dense(20, activation='relu', kernel_initializer='normal'))
-    # model.add(Dropout(0.5))
-    # 3:
-    # model.add(Dense(24, input_dim=x.shape[1], activation='relu', kernel_initializer='normal'))
-    # model.add(Dropout(0.5))
-    # model.add(Dense(256, activation='relu', kernel_initializer='normal'))
-    # model.add(Dropout(0.5))
-    # model.add(Dense(512, activation='relu', kernel_initializer='normal'))
-    # model.add(Dropout(0.5))
-    # model.add(Dense(256, activation='relu', kernel_initializer='normal'))
-    # model.add(Dropout(0.5))
-    # model.add(Dense(5, activation='softmax'))
+    model.add(Dense(64, input_dim=x.shape[1], activation='relu', kernel_initializer='normal',kernel_regularizer=regularizers.l2(0.01),
+                activity_regularizer=regularizers.l1(0.01)))
+    model.add(Dropout(DROPOUT))
+    model.add(Dense(256, activation='relu', kernel_initializer='normal'))
+    model.add(Dropout(DROPOUT))
+    model.add(Dense(512, activation='relu', kernel_initializer='normal'))
+    model.add(Dropout(DROPOUT))
+    model.add(Dense(256, activation='relu', kernel_initializer='normal'))
+    model.add(Dropout(DROPOUT))
+    model.add(Dense(5, activation='softmax'))
+    
+    # compile model
+    model.compile(optimizer='adam',
+                loss='categorical_crossentropy',
+                metrics=['accuracy'])
 
-    # 4: 91.56927%
-    # model.add(Dense(122, input_dim=x.shape[1], activation='relu', kernel_initializer='normal'))
-    # model.add(Dense(122, input_dim=x.shape[1], activation='relu'))
-    # model.add(BatchNormalization(mode=0))
-    # model.add(Dropout(dropout))
-    # # model.add(Dense(256, activation='relu', kernel_initializer='normal'))
-    # # model.add(Dropout(dropout))
-    # # model.add(Dense(512, activation='relu', kernel_initializer='normal'))
-    # # model.add(Dropout(dropout))
-    # # model.add(Dense(256, activation='relu', kernel_initializer='normal'))
-    # # model.add(Dropout(dropout))
-    # model.add(Dense(5, activation='softmax'))
-    #rmsprop
-    # model.compile(optimizer='adam',
-    #             loss='categorical_crossentropy',
-    #             metrics=['accuracy'])
-
-    # checkpointer = ModelCheckpoint(filepath="model.h5", verbose=0, save_best_only=True)  # 将模型保存到h5文件
-    # tensorboard = TensorBoard(log_dir='./logs', histogram_freq=0, write_graph=True, write_images=True) # 保存训练进度文件
-
-
+    # define some callback functions
+    checkpointer = ModelCheckpoint(filepath="model.h5", verbose=0, save_best_only=True)  # 将模型保存到h5文件
+    tensorboard = TensorBoard(log_dir='./logs', histogram_freq=0, write_graph=True, write_images=True) # 保存训练进度文件
+    monitor = EarlyStopping(monitor='loss', min_delta=1e-3, patience=3, verbose=1, mode='auto')
+    # mt = Metrics()
+  
     # 训练模型，以 32 个样本为一个 batch 进行迭代
-    # monitor = EarlyStopping(monitor='loss', min_delta=1e-3, patience=5, verbose=1, mode='auto')
-    # model.fit(x, y, callbacks=[monitor], epochs=1000, batch_size=32)
-    # epochs:5 91.5342%(corrected)
-    # history = model.fit(x, y, epochs=3, batch_size=64, 
-    #             validation_data=(x_test, y_test), verbose=1,
-    #             callbacks=[checkpointer, tensorboard]).history
+    history = model.fit(x, y, epochs=3, batch_size=256, 
+                validation_split=0.25, verbose=1,
+                callbacks=[checkpointer, tensorboard, monitor]).history
 
-    # trained_model = load_model('model.h5')  # 加载保存的模型
-    # print("successfully load trained model: model.h5")
+    plot_model(model, to_file='model.png')
+
+    trained_model = load_model('model.h5')  # 加载保存的模型
+    print("successfully load trained model: model.h5")
 
     # 打印模型的基本结构
-    # print(trained_model.summary())
+    print(trained_model.summary())
 
     # Measure accuracy
-    # score = model.evaluate(x_test, y_test,batch_size=64)
-    # print('Test score:', score[0])
-    # print('Test accuracy:', score[1])
-    pred = model.predict(x_test)
-    pred = np.argmax(pred,axis=1)
-    y_eval = np.argmax(y_test,axis=1)
-    score = metrics.accuracy_score(y_eval, pred)
-    print("Validation score: {}".format(score))
+    score = model.evaluate(x_test, y_test,batch_size=256)
+    print('Test score:', score[0])
+    print('Test accuracy:', score[1])
+    # mt.print_metrics()
+    # pred = model.predict(x_test)
+    # pred = np.argmax(pred,axis=1)
+    # y_eval = np.argmax(y_test,axis=1)
+    # score = metrics.accuracy_score(y_eval, pred)
+    # print("Validation score: {}".format(score))
 
     # return history
 
@@ -305,5 +305,4 @@ def start():
 if __name__ == '__main__':
     # init_data('/Users/johnson/Downloads/graduation_project/code/dataset/kddcup.data_handled.csv', 'train.csv')
     # init_data('/Users/johnson/Downloads/graduation_project/code/dataset/corrected_handled.csv', 'test.csv')
-    #custom_start('./dataset/10_percent.csv', './dataset/test.csv', structure=[122, 256, 512, 256, 5], dropout=0.5)
     start()
