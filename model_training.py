@@ -16,6 +16,8 @@ class ModelTraining(object):
     def __init__(self):
         self.df = pd.read_csv('./dataset/10_percent.csv')
         self.df_test = pd.read_csv('./dataset/test.csv')
+        # self.df = pd.read_csv('./dataset/train_2_class.csv')
+        # self.df_test = pd.read_csv('./dataset/test_2_class.csv')
 
     def start(self):
         # Break into X (predictors) & y (prediction)
@@ -113,7 +115,7 @@ class ModelTraining(object):
         print(trained_model.summary())
 
         # Measure accuracy
-        score = model.evaluate(x_test, y_test,batch_size=32)
+        score = trained_model.evaluate(x_test, y_test,batch_size=32)
         print('Test score:', score[0])
         print('Test accuracy:', score[1])
         # mt.print_metrics()
@@ -124,6 +126,80 @@ class ModelTraining(object):
         # print("Validation score: {}".format(score))
 
         return history
+
+    def start_2_class(self):
+        df = pd.read_csv('./dataset/train_2_class.csv')
+        df_test = pd.read_csv('./dataset/test_2_class.csv')
+        # Break into X (predictors) & y (prediction)
+        y = df.outcome
+        df.drop('outcome', axis=1, inplace=True)
+        x = df
+
+        y_test = df_test.outcome
+        df_test.drop('outcome', axis=1, inplace=True)
+        x_test = df_test
+
+        print('x,y:', x.shape, y.shape)
+        print('x_test,y_test:', x_test.shape, y_test.shape)
+
+        model = Sequential()
+        DROPOUT = 0.5
+
+        # 4: 91.56927%
+        model.add(Dense(24, input_dim=x.shape[1], activation='relu', kernel_initializer='normal'))
+        # model.add(Dense(122, input_dim=x.shape[1], activation='relu', kernel_initializer='normal'))
+        # model.add(Dropout(DROPOUT))
+        # model.add(Dense(256, activation='relu', kernel_initializer='normal'))
+        # model.add(Dropout(DROPOUT))
+        # model.add(Dense(512, activation='relu', kernel_initializer='normal'))
+        # model.add(Dropout(DROPOUT))
+        # model.add(Dense(256, activation='relu', kernel_initializer='normal'))
+        model.add(Dropout(DROPOUT))
+        model.add(Dense(1, activation='sigmoid'))
+        #categorical_crossentropy
+        model.compile(optimizer='adam',
+                    loss='binary_crossentropy',
+                    metrics=['accuracy'])
+
+        checkpointer = ModelCheckpoint(filepath="model_2_class.h5", verbose=0, save_best_only=True)  # 将模型保存到h5文件
+        tensorboard = TensorBoard(log_dir='./logs_2_class', histogram_freq=0, write_graph=True, write_images=True) # 保存训练进度文件
+
+        # 训练模型，以 32 个样本为一个 batch 进行迭代
+        monitor = EarlyStopping(monitor='loss', min_delta=1e-3, patience=3, verbose=1, mode='auto')
+        
+        history = model.fit(x, y, epochs=6, batch_size=32, 
+                    validation_data=(x_test, y_test), verbose=1,
+                    callbacks=[checkpointer, tensorboard, monitor]).history
+
+        # 生成模型的结构图
+        plot_model(model, to_file='model.png')
+        # 输出训练过程中训练集和验证集准确值和损失值得变化
+        plt.plot()
+        plt.plot(history['val_acc'])
+        plt.title('model accuracy')
+        plt.ylabel('accuracy')
+        plt.xlabel('epoch')
+        plt.legend(['train', 'test'], loc='upper left')
+        plt.show()
+        # summarize history for loss
+        plt.plot(history['loss'])
+        plt.plot(history['val_loss'])
+        plt.title('model loss')
+        plt.ylabel('loss')
+        plt.xlabel('epoch')
+        plt.legend(['train', 'test'], loc='upper left')
+        plt.show()
+
+        trained_model = load_model('model_2_class.h5')  # 加载保存的模型
+        print("successfully load trained model: model_2_class.h5")
+
+        # 打印模型的基本结构
+        print(trained_model.summary())
+
+        # Measure accuracy
+        score = trained_model.evaluate(x_test, y_test,batch_size=32)
+        print('Test score:', score[0])
+        print('Test accuracy:', score[1])
 
     def split_xy(self, df, target):
         y = df[target]
@@ -209,4 +285,5 @@ if __name__ == '__main__':
     # init_data('/Users/johnson/Downloads/graduation_project/code/dataset/kddcup.data_handled.csv', 'train.csv')
     # init_data('/Users/johnson/Downloads/graduation_project/code/dataset/corrected_handled.csv', 'test.csv')
     # model.start()
-    model.assessment()
+    model.start_2_class()
+    # model.assessment()

@@ -82,9 +82,53 @@ def handleLabel(input):
         if input[41] in labels_list[i]:
             return i
     return 0
+
+"""
+下面的代码用于将数据处理为2分类
+"""
+def preHandle_2_class(inputfile, outputfile):
+    print(inputfile, outputfile)
+    source_file = inputfile
+    handled_file = outputfile
+    data_to_flie=open(handled_file, 'w')
+    with (open(source_file,'r')) as data_from:
+        csv_reader=csv.reader(data_from)
+        csv_writer=csv.writer(data_to_flie)
+        count=0
+        for i in csv_reader:
+            temp_line=np.array(i)          
+
+            handled_protocol = np.array(handleProtocol(i))  #将源文件行中3种协议类型转换成数字标识
+            handled_service = np.array(handleService(i))    #将源文件行中70种网络服务类型转换成数字标识
+            handled_flag = np.array(handleFlag(i))  #将源文件行中11种网络连接状态转换成数字标识
+
+            temp_line[41]=handleLabel_2_class(i)          #将源文件行中23种攻击类型转换成数字标识
+
+            temp_line = np.delete(temp_line, [1,2,3])   # 删除这三列，它们已经转为[1,0,0,...,0]的形式了
+
+            temp_line = np.concatenate((temp_line,handled_protocol, handled_service, handled_flag),axis=0)
+
+            csv_writer.writerow(temp_line)
+            #print count,'staus:',temp_line[1],temp_line[2],temp_line[3],temp_line[41]
+            count+=1
+            
+        print('processed %d lines data' % count)
+        data_to_flie.close()
+
+def handleLabel_2_class(input):
+    labels_list = [['normal.'],
+    ['ipsweep.','mscan.','nmap.','portsweep.','saint.','satan.'],
+    ['apache2.','back.','land.','mailbomb.','neptune.','pod.','processtable.','smurf.','teardrop.','udpstorm.'],
+    ['buffer_overflow.','httptunnel.','loadmodule.','perl.','ps.','rootkit.','sqlattack.','xterm.'],
+    ['ftp_write.','guess_passwd.','imap.','multihop.','named.','phf.','sendmail.','snmpgetattack.','snmpguess.','spy.','warezclient.','warezmaster.','worm.','xlock.','xsnoop.']]
+
+    if input[41] == 'normal.':
+        return 0
+    else:
+        return 1
     
 if __name__ == '__main__':
-    preHandle('/Users/johnson/Downloads/graduation_project/dataset/kddcup.data','kddcup.data_handled.csv')
-    preHandle('/Users/johnson/Downloads/graduation_project/dataset/corrected', 'corrected_handled.csv')
-    # preHandle('/Users/johnson/Downloads/graduation_project/dataset/kddcup.data_10_percent', 'kddcup_10_percent_handled.csv')
-    # print staut_list
+    # preHandle('/Users/johnson/Downloads/graduation_project/dataset/kddcup.data','kddcup.data_handled.csv')
+    # preHandle('/Users/johnson/Downloads/graduation_project/dataset/corrected', 'corrected_handled.csv')
+    preHandle_2_class('/Users/johnson/Downloads/graduation_project/NIDS-with-DL/dataset/10_percent_unhandled.csv','./dataset/train_handled_2_class.csv')
+    preHandle_2_class('/Users/johnson/Downloads/graduation_project/NIDS-with-DL/dataset/corrected_unhandled.csv', './dataset/test_handled_2_class.csv')
