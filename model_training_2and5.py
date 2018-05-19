@@ -5,8 +5,9 @@ from keras.utils import plot_model, to_categorical
 from keras.models import Sequential, load_model
 from keras.layers.core import Dense, Activation, Dropout
 from keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard, Callback
-from keras.optimizers import SGD,Nadam
+from keras.optimizers import SGD,Nadam,RMSprop,Adagrad,Adadelta,Adam,Adamax
 from keras.constraints import maxnorm
+from keras.layers.normalization import BatchNormalization
 import matplotlib.pyplot as plt
 
 from helpfulTools import *
@@ -16,8 +17,6 @@ class ModelTraining(object):
     def __init__(self):
         self.df = pd.read_csv('./dataset/10_percent.csv')
         self.df_test = pd.read_csv('./dataset/test.csv')
-        # self.df = pd.read_csv('./dataset/train_2_class.csv')
-        # self.df_test = pd.read_csv('./dataset/test_2_class.csv')
 
     def start(self):
         # Break into X (predictors) & y (prediction)
@@ -31,20 +30,7 @@ class ModelTraining(object):
         model = Sequential()
         DROPOUT = 0.5
 
-        # model.add(Dense(122, input_dim=x.shape[1], activation='relu', kernel_initializer='normal',kernel_regularizer=regularizers.l2(0.01),
-        #             activity_regularizer=regularizers.l1(0.01)))
-        # model.add(Dense(24, input_dim=x.shape[1], activation='relu', kernel_initializer='normal',kernel_regularizer=regularizers.l2(0.01)))
-        # model.add(Dropout(DROPOUT))
-        # model.add(Dense(256, activation='relu', kernel_initializer='normal',kernel_regularizer=regularizers.l2(0.01)))
-        # model.add(Dropout(DROPOUT))
-        # model.add(Dense(512, activation='relu', kernel_initializer='normal',kernel_regularizer=regularizers.l2(0.01)))
-        # model.add(Dropout(DROPOUT))
-        # model.add(Dense(256, activation='relu', kernel_initializer='normal',kernel_regularizer=regularizers.l2(0.01)))
-        # model.add(Dropout(DROPOUT))
-        # model.add(Dense(5, activation='softmax'))
-
-        model.add(Dense(122, input_dim=x.shape[1], activation='relu', kernel_initializer='normal'))
-        # model.add(Dense(24, input_dim=x.shape[1], activation='relu', kernel_initializer='normal',kernel_regularizer=regularizers.l2(0.01)))
+        model.add(Dense(24, input_dim=x.shape[1], activation='relu', kernel_initializer='normal'))
         model.add(Dropout(DROPOUT))
         model.add(Dense(256, activation='relu', kernel_initializer='normal'))
         model.add(Dropout(DROPOUT))
@@ -61,50 +47,62 @@ class ModelTraining(object):
         层数目前影响不大
         dropout需要调整
         l2正则
-
         """
         # 编译模型
-        epochs_nb = 5
+        epochs_nb = 20
         learning_rate = 0.5
         decay_rate = learning_rate / epochs_nb
         momentum = 0.8
-        SGD(lr=learning_rate, momentum=momentum, decay=decay_rate, nesterov=True)
+        # SGD(lr=learning_rate, momentum=momentum, decay=decay_rate, nesterov=True)
         Nadam(lr=0.002, beta_1=0.9, beta_2=0.999, epsilon=None, schedule_decay=0.004)
-        model.compile(optimizer='adam',
+        model.compile(optimizer='nadam',
                     loss='categorical_crossentropy',
                     metrics=['accuracy'])
 
         # define some callback functions
         checkpointer = ModelCheckpoint(filepath="model.h5", verbose=0, save_best_only=True)  # 将模型保存到h5文件
         tensorboard = TensorBoard(log_dir='./logs', histogram_freq=0, write_graph=True, write_images=True) # 保存训练进度文件
-        monitor = EarlyStopping(monitor='val_acc', min_delta=1e-3, patience=3, verbose=1, mode='auto')
-        # mt = Metrics()
-  
+        monitor = EarlyStopping(monitor='val_acc', min_delta=1e-3, patience=5, verbose=1, mode='auto')
+        
+
+        batchsize = 2048
         # 训练模型，以 32 个样本为一个 batch 进行迭代
-        # history = model.fit(x, y, epochs=epochs_nb, batch_size=32, 
-        #             validation_split=0.2, verbose=1,
+        # history = model.fit(x, y, epochs=epochs_nb, batch_size=batchsize, 
+        #             validation_split=0.25, verbose=1,
         #             callbacks=[checkpointer, tensorboard, monitor]).history
-        history = model.fit(x, y, epochs=epochs_nb, batch_size=32, 
+        history = model.fit(x, y, epochs=epochs_nb, batch_size=batchsize, 
                     validation_data=(x_test,y_test), verbose=1,
                     callbacks=[checkpointer, tensorboard, monitor]).history
 
         # 生成模型的结构图
         plot_model(model, to_file='model.png')
         # 输出训练过程中训练集和验证集准确值和损失值得变化
-        plt.plot()
-        plt.plot(history['val_acc'])
-        plt.title('model accuracy')
-        plt.ylabel('accuracy')
-        plt.xlabel('epoch')
-        plt.legend(['train', 'test'], loc='upper left')
+        print(history.keys())
+        loss_values = history['loss']
+        val_loss_values = history['val_loss']
+
+        epochs = range(1, len(history['acc']) + 1)
+
+        plt.plot(epochs, loss_values, 'bo', label='Training loss')         
+        plt.plot(epochs, val_loss_values, 'b', label='Validation loss')   
+        plt.title('Training and validation loss')
+        plt.xlabel('Epochs')
+        plt.ylabel('Loss')
+        plt.legend()
+
         plt.show()
         # summarize history for loss
-        plt.plot(history['loss'])
-        plt.plot(history['val_loss'])
-        plt.title('model loss')
-        plt.ylabel('loss')
-        plt.xlabel('epoch')
-        plt.legend(['train', 'test'], loc='upper left')
+        plt.clf()  # 清除图片                                  
+        acc_values = history['acc']
+        val_acc_values = history['val_acc']
+
+        plt.plot(epochs, acc_values, 'bo', label='Training acc')
+        plt.plot(epochs, val_acc_values, 'b', label='Validation acc')
+        plt.title('Training and validation accuracy')
+        plt.xlabel('Epochs')
+        plt.ylabel('Loss')
+        plt.legend()
+
         plt.show()
 
         # 加载保存的模型
@@ -115,15 +113,9 @@ class ModelTraining(object):
         print(trained_model.summary())
 
         # Measure accuracy
-        score = trained_model.evaluate(x_test, y_test,batch_size=32)
+        score = trained_model.evaluate(x_test, y_test,batch_size=batchsize)
         print('Test score:', score[0])
         print('Test accuracy:', score[1])
-        # mt.print_metrics()
-        # pred = model.predict(x_test)
-        # pred = np.argmax(pred,axis=1)
-        # y_eval = np.argmax(y_test,axis=1)
-        # score = metrics.accuracy_score(y_eval, pred)
-        # print("Validation score: {}".format(score))
 
         return history
 
@@ -146,23 +138,24 @@ class ModelTraining(object):
         DROPOUT = 0.5
 
         # 2-class 92.334%
-        # model.add(Dense(122, input_dim=x.shape[1], activation='relu', kernel_initializer='normal'))
+        model.add(Dense(24, input_dim=x.shape[1], activation='relu', kernel_initializer='normal'))
         # model.add(Dense(24, input_dim=x.shape[1], activation='relu', kernel_initializer='normal',kernel_regularizer=regularizers.l2(0.01)))
-        # model.add(Dropout(DROPOUT))
-        # model.add(Dense(256, activation='relu', kernel_initializer='normal'))
-        # model.add(Dropout(DROPOUT))
-        # model.add(Dense(64, activation='relu', kernel_initializer='normal'))
-        # model.add(Dropout(DROPOUT))
-        # model.add(Dense(8, activation='relu', kernel_initializer='normal'))
-        # model.add(Dropout(DROPOUT))
-        # model.add(Dense(1, activation='sigmoid'))
-
-        # testing model structure
-        model.add(Dense(16, activation='relu', input_dim=x.shape[1]))
-        model.add(Dense(16, activation='relu'))
+        model.add(Dropout(DROPOUT))
+        model.add(Dense(256, activation='relu', kernel_initializer='normal'))
+        model.add(Dropout(DROPOUT))
+        model.add(Dense(512, activation='relu', kernel_initializer='normal'))
+        model.add(Dropout(DROPOUT))
+        model.add(Dense(256, activation='relu', kernel_initializer='normal'))
+        model.add(Dropout(DROPOUT))
         model.add(Dense(1, activation='sigmoid'))
 
-        model.compile(optimizer='adam',
+        # model.add(Dense(122, input_dim=x.shape[1], activation='relu', kernel_initializer='normal'))
+        # model.add(Dense(256, activation='relu', kernel_initializer='normal'))
+        # model.add(Dense(64, activation='relu', kernel_initializer='normal'))
+        # model.add(Dense(8, activation='relu', kernel_initializer='normal'))
+        # model.add(Dense(1, activation='softmax'))
+
+        model.compile(optimizer='nadam',
                     loss='binary_crossentropy',
                     metrics=['accuracy'])
 
@@ -171,16 +164,17 @@ class ModelTraining(object):
 
         # 训练模型，以 32 个样本为一个 batch 进行迭代
         monitor = EarlyStopping(monitor='val_acc', min_delta=1e-3, patience=3, verbose=1, mode='auto')
-        
-        # history = model.fit(x, y, epochs=20, batch_size=512, 
-        #             validation_data=(x_test, y_test), verbose=1,
-        #             callbacks=[checkpointer, tensorboard, monitor]).history
-        history = model.fit(x, y, epochs=20, batch_size=512, 
-                    validation_split=0.25, verbose=1,
+
+        batchsize = 2048
+        history = model.fit(x, y, epochs=20, batch_size=batchsize, 
+                    validation_data=(x_test, y_test), verbose=1,
                     callbacks=[checkpointer, tensorboard, monitor]).history
+        # history = model.fit(x, y, epochs=20, batch_size=batchsize, 
+        #             validation_split=0.25, verbose=1,
+        #             callbacks=[checkpointer, tensorboard, monitor]).history
 
         # 生成模型的结构图
-        plot_model(model, to_file='model.png')
+        # plot_model(model, to_file='model.png')
         # 输出训练过程中训练集和验证集准确值和损失值得变化
         print(history.keys())
         loss_values = history['loss']
@@ -196,13 +190,7 @@ class ModelTraining(object):
         plt.legend()
 
         plt.show()
-        """plt.plot()
-        plt.plot(history['val_acc'])
-        plt.title('model accuracy')
-        plt.ylabel('accuracy')
-        plt.xlabel('epoch')
-        plt.legend(['train', 'test'], loc='upper left')
-        plt.show()"""
+        
         # summarize history for loss
         plt.clf()  # 清除图片                                  
         acc_values = history['acc']
@@ -216,14 +204,7 @@ class ModelTraining(object):
         plt.legend()
 
         plt.show()
-        """plt.plot(history['loss'])
-        plt.plot(history['val_loss'])
-        plt.title('model loss')
-        plt.ylabel('loss')
-        plt.xlabel('epoch')
-        plt.legend(['train', 'test'], loc='upper left')
-        plt.show()"""
-
+        
         trained_model = load_model('model_2_class.h5')  # 加载保存的模型
         print("successfully load trained model: model_2_class.h5")
 
@@ -231,7 +212,7 @@ class ModelTraining(object):
         print(trained_model.summary())
 
         # Measure accuracy
-        score = trained_model.evaluate(x_test, y_test,batch_size=512)
+        score = trained_model.evaluate(x_test, y_test,batch_size=batchsize)
         print('Test score:', score[0])
         print('Test accuracy:', score[1])
 
@@ -318,6 +299,6 @@ if __name__ == '__main__':
     model = ModelTraining()
     # init_data('/Users/johnson/Downloads/graduation_project/code/dataset/kddcup.data_handled.csv', 'train.csv')
     # init_data('/Users/johnson/Downloads/graduation_project/code/dataset/corrected_handled.csv', 'test.csv')
-    # model.start()
+    model.start()
     # model.start_2_class()
-    model.assessment()
+    # model.assessment()
