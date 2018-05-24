@@ -5,7 +5,7 @@ from keras.utils import plot_model, to_categorical
 from keras.models import Sequential, load_model
 from keras.layers.core import Dense, Activation, Dropout
 from keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard, Callback
-from keras.optimizers import SGD,Nadam
+from keras.optimizers import SGD,Nadam,RMSprop,Adagrad,Adadelta,Adam,Adamax
 from keras.constraints import maxnorm
 from keras.layers.normalization import BatchNormalization
 import matplotlib.pyplot as plt
@@ -30,39 +30,18 @@ class ModelTraining(object):
         model = Sequential()
         DROPOUT = 0.5
 
-
-        # model.add(Dense(24, activation='relu', input_dim=x.shape[1]))
-        # model.add(Dense(64, activation='relu'))
-        # model.add(Dense(32, activation='relu'))
-        # model.add(Dense(122, input_dim=x.shape[1], activation='relu', kernel_initializer='normal'))
-        model.add(Dense(5, input_dim=x.shape[1], activation='relu', kernel_initializer='normal'))
-        model.add(Dropout(DROPOUT))
-        # model.add(BatchNormalization())
-        # model.add(Dense(6, activation='relu', kernel_initializer='normal'))
-        # model.add(Dropout(DROPOUT))
-        # model.add(Dense(12, activation='relu', kernel_initializer='normal'))
-        # model.add(Dropout(DROPOUT))
-        # model.add(Dense(6, activation='relu', kernel_initializer='normal'))
-        # model.add(Dropout(DROPOUT))
+        model.add(Dense(24, input_dim=x.shape[1], activation='relu', kernel_initializer='normal'))
+        model.add(Dense(256, activation='relu', kernel_initializer='normal'))
+        model.add(Dense(512, activation='relu', kernel_initializer='normal'))
+        model.add(Dense(256, activation='relu', kernel_initializer='normal'))
         model.add(Dense(5, activation='softmax'))
     
-        """
-        optimizer:
-            sgd: 80+%
-            nadam:90+%
-        层数目前影响不大
-        dropout需要调整
-        l2正则
-
-        """
         # 编译模型
-        epochs_nb = 20
-        learning_rate = 0.5
-        decay_rate = learning_rate / epochs_nb
-        momentum = 0.8
-        SGD(lr=learning_rate, momentum=momentum, decay=decay_rate, nesterov=True)
         Nadam(lr=0.002, beta_1=0.9, beta_2=0.999, epsilon=None, schedule_decay=0.004)
-        model.compile(optimizer='nadam',
+        """
+        optimizer=['Nadam','SGD','RMSprop','Adagrad','Adadelta','Adam','Adamax']
+        """
+        model.compile(optimizer='adamax',
                     loss='categorical_crossentropy',
                     metrics=['accuracy'])
 
@@ -71,11 +50,13 @@ class ModelTraining(object):
         tensorboard = TensorBoard(log_dir='./logs', histogram_freq=0, write_graph=True, write_images=True) # 保存训练进度文件
         monitor = EarlyStopping(monitor='val_acc', min_delta=1e-3, patience=5, verbose=1, mode='auto')
         
+
+        batchsize = 2048
         # 训练模型，以 32 个样本为一个 batch 进行迭代
-        # history = model.fit(x, y, epochs=epochs_nb, batch_size=512, 
+        # history = model.fit(x, y, epochs=epochs_nb, batch_size=batchsize, 
         #             validation_split=0.25, verbose=1,
         #             callbacks=[checkpointer, tensorboard, monitor]).history
-        history = model.fit(x, y, epochs=epochs_nb, batch_size=512, 
+        history = model.fit(x, y, epochs=epochs_nb, batch_size=batchsize, 
                     validation_data=(x_test,y_test), verbose=1,
                     callbacks=[checkpointer, tensorboard, monitor]).history
 
@@ -118,7 +99,7 @@ class ModelTraining(object):
         print(trained_model.summary())
 
         # Measure accuracy
-        score = trained_model.evaluate(x_test, y_test,batch_size=512)
+        score = trained_model.evaluate(x_test, y_test,batch_size=batchsize)
         print('Test score:', score[0])
         print('Test accuracy:', score[1])
 
@@ -143,20 +124,14 @@ class ModelTraining(object):
         DROPOUT = 0.5
 
         # 2-class 92.334%
-        # model.add(Dense(122, input_dim=x.shape[1], activation='relu', kernel_initializer='normal'))
-        # model.add(Dense(24, input_dim=x.shape[1], activation='relu', kernel_initializer='normal',kernel_regularizer=regularizers.l2(0.01)))
-        # model.add(Dropout(DROPOUT))
-        # model.add(Dense(256, activation='relu', kernel_initializer='normal'))
-        # model.add(Dropout(DROPOUT))
-        # model.add(Dense(64, activation='relu', kernel_initializer='normal'))
-        # model.add(Dropout(DROPOUT))
-        # model.add(Dense(8, activation='relu', kernel_initializer='normal'))
-        # model.add(Dropout(DROPOUT))
-        # model.add(Dense(1, activation='sigmoid'))
-
-        # testing model structure
-        model.add(Dense(16, activation='relu', input_dim=x.shape[1]))
-        model.add(Dense(16, activation='relu'))
+        model.add(Dense(122, input_dim=x.shape[1], activation='relu', kernel_initializer='normal'))
+        model.add(Dropout(DROPOUT))
+        model.add(Dense(256, activation='relu', kernel_initializer='normal'))
+        model.add(Dropout(DROPOUT))
+        model.add(Dense(64, activation='relu', kernel_initializer='normal'))
+        model.add(Dropout(DROPOUT))
+        model.add(Dense(8, activation='relu', kernel_initializer='normal'))
+        model.add(Dropout(DROPOUT))
         model.add(Dense(1, activation='sigmoid'))
 
         model.compile(optimizer='adam',
@@ -193,13 +168,7 @@ class ModelTraining(object):
         plt.legend()
 
         plt.show()
-        """plt.plot()
-        plt.plot(history['val_acc'])
-        plt.title('model accuracy')
-        plt.ylabel('accuracy')
-        plt.xlabel('epoch')
-        plt.legend(['train', 'test'], loc='upper left')
-        plt.show()"""
+
         # summarize history for loss
         plt.clf()  # 清除图片                                  
         acc_values = history['acc']
@@ -213,13 +182,6 @@ class ModelTraining(object):
         plt.legend()
 
         plt.show()
-        """plt.plot(history['loss'])
-        plt.plot(history['val_loss'])
-        plt.title('model loss')
-        plt.ylabel('loss')
-        plt.xlabel('epoch')
-        plt.legend(['train', 'test'], loc='upper left')
-        plt.show()"""
 
         trained_model = load_model('model_2_class.h5')  # 加载保存的模型
         print("successfully load trained model: model_2_class.h5")

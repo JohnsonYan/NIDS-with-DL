@@ -5,7 +5,7 @@ from keras.utils import plot_model, to_categorical
 from keras.models import Sequential, load_model
 from keras.layers.core import Dense, Activation, Dropout
 from keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard, Callback
-from keras.optimizers import SGD,Nadam,RMSprop,Adagrad,Adadelta,Adam,Adamax
+from keras.optimizers import SGD,Nadam
 from keras.constraints import maxnorm
 from keras.layers.normalization import BatchNormalization
 import matplotlib.pyplot as plt
@@ -31,29 +31,12 @@ class ModelTraining(object):
         DROPOUT = 0.5
 
         model.add(Dense(24, input_dim=x.shape[1], activation='relu', kernel_initializer='normal'))
-        model.add(Dropout(DROPOUT))
         model.add(Dense(256, activation='relu', kernel_initializer='normal'))
-        model.add(Dropout(DROPOUT))
         model.add(Dense(512, activation='relu', kernel_initializer='normal'))
-        model.add(Dropout(DROPOUT))
         model.add(Dense(256, activation='relu', kernel_initializer='normal'))
-        model.add(Dropout(DROPOUT))
         model.add(Dense(5, activation='softmax'))
     
-        """
-        optimizer:
-            sgd: 80+%
-            nadam:90+%
-        层数目前影响不大
-        dropout需要调整
-        l2正则
-        """
         # 编译模型
-        epochs_nb = 20
-        learning_rate = 0.5
-        decay_rate = learning_rate / epochs_nb
-        momentum = 0.8
-        # SGD(lr=learning_rate, momentum=momentum, decay=decay_rate, nesterov=True)
         Nadam(lr=0.002, beta_1=0.9, beta_2=0.999, epsilon=None, schedule_decay=0.004)
         model.compile(optimizer='nadam',
                     loss='categorical_crossentropy',
@@ -64,8 +47,10 @@ class ModelTraining(object):
         tensorboard = TensorBoard(log_dir='./logs', histogram_freq=0, write_graph=True, write_images=True) # 保存训练进度文件
         monitor = EarlyStopping(monitor='val_acc', min_delta=1e-3, patience=5, verbose=1, mode='auto')
         
-
-        batchsize = 2048
+        """
+        batchsize=[512,256,128,64,32,16,8,1024,2048,4096,8192,16384]
+        """
+        batchsize = 16384
         # 训练模型，以 32 个样本为一个 batch 进行迭代
         # history = model.fit(x, y, epochs=epochs_nb, batch_size=batchsize, 
         #             validation_split=0.25, verbose=1,
@@ -138,24 +123,18 @@ class ModelTraining(object):
         DROPOUT = 0.5
 
         # 2-class 92.334%
-        model.add(Dense(24, input_dim=x.shape[1], activation='relu', kernel_initializer='normal'))
-        # model.add(Dense(24, input_dim=x.shape[1], activation='relu', kernel_initializer='normal',kernel_regularizer=regularizers.l2(0.01)))
+        model.add(Dense(122, input_dim=x.shape[1], activation='relu', kernel_initializer='normal'))
+        model.add(Dense(24, input_dim=x.shape[1], activation='relu', kernel_initializer='normal',kernel_regularizer=regularizers.l2(0.01)))
         model.add(Dropout(DROPOUT))
         model.add(Dense(256, activation='relu', kernel_initializer='normal'))
         model.add(Dropout(DROPOUT))
-        model.add(Dense(512, activation='relu', kernel_initializer='normal'))
+        model.add(Dense(64, activation='relu', kernel_initializer='normal'))
         model.add(Dropout(DROPOUT))
-        model.add(Dense(256, activation='relu', kernel_initializer='normal'))
+        model.add(Dense(8, activation='relu', kernel_initializer='normal'))
         model.add(Dropout(DROPOUT))
         model.add(Dense(1, activation='sigmoid'))
 
-        # model.add(Dense(122, input_dim=x.shape[1], activation='relu', kernel_initializer='normal'))
-        # model.add(Dense(256, activation='relu', kernel_initializer='normal'))
-        # model.add(Dense(64, activation='relu', kernel_initializer='normal'))
-        # model.add(Dense(8, activation='relu', kernel_initializer='normal'))
-        # model.add(Dense(1, activation='softmax'))
-
-        model.compile(optimizer='nadam',
+        model.compile(optimizer='adam',
                     loss='binary_crossentropy',
                     metrics=['accuracy'])
 
@@ -164,17 +143,16 @@ class ModelTraining(object):
 
         # 训练模型，以 32 个样本为一个 batch 进行迭代
         monitor = EarlyStopping(monitor='val_acc', min_delta=1e-3, patience=3, verbose=1, mode='auto')
-
-        batchsize = 2048
-        history = model.fit(x, y, epochs=20, batch_size=batchsize, 
-                    validation_data=(x_test, y_test), verbose=1,
-                    callbacks=[checkpointer, tensorboard, monitor]).history
-        # history = model.fit(x, y, epochs=20, batch_size=batchsize, 
-        #             validation_split=0.25, verbose=1,
+        
+        # history = model.fit(x, y, epochs=20, batch_size=512, 
+        #             validation_data=(x_test, y_test), verbose=1,
         #             callbacks=[checkpointer, tensorboard, monitor]).history
+        history = model.fit(x, y, epochs=20, batch_size=512, 
+                    validation_split=0.25, verbose=1,
+                    callbacks=[checkpointer, tensorboard, monitor]).history
 
         # 生成模型的结构图
-        # plot_model(model, to_file='model.png')
+        plot_model(model, to_file='model.png')
         # 输出训练过程中训练集和验证集准确值和损失值得变化
         print(history.keys())
         loss_values = history['loss']
@@ -190,7 +168,6 @@ class ModelTraining(object):
         plt.legend()
 
         plt.show()
-        
         # summarize history for loss
         plt.clf()  # 清除图片                                  
         acc_values = history['acc']
@@ -204,7 +181,7 @@ class ModelTraining(object):
         plt.legend()
 
         plt.show()
-        
+
         trained_model = load_model('model_2_class.h5')  # 加载保存的模型
         print("successfully load trained model: model_2_class.h5")
 
@@ -212,7 +189,7 @@ class ModelTraining(object):
         print(trained_model.summary())
 
         # Measure accuracy
-        score = trained_model.evaluate(x_test, y_test,batch_size=batchsize)
+        score = trained_model.evaluate(x_test, y_test,batch_size=512)
         print('Test score:', score[0])
         print('Test accuracy:', score[1])
 

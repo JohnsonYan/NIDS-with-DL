@@ -30,37 +30,18 @@ class ModelTraining(object):
         model = Sequential()
         DROPOUT = 0.5
 
-
-        # model.add(Dense(24, activation='relu', input_dim=x.shape[1]))
-        # model.add(Dense(64, activation='relu'))
-        # model.add(Dense(32, activation='relu'))
-        # model.add(Dense(122, input_dim=x.shape[1], activation='relu', kernel_initializer='normal'))
-        model.add(Dense(12, input_dim=x.shape[1], activation='relu', kernel_initializer='normal'))
-        model.add(Dropout(DROPOUT))
+        model.add(Dense(24, input_dim=x.shape[1], activation='relu', kernel_initializer='normal'))
+        # model.add(Dropout(DROPOUT))
         # model.add(BatchNormalization())
-        model.add(Dense(24, activation='relu', kernel_initializer='normal'))
-        model.add(Dropout(DROPOUT))
-        model.add(Dense(48, activation='relu', kernel_initializer='normal'))
-        model.add(Dropout(DROPOUT))
-        model.add(Dense(24, activation='relu', kernel_initializer='normal'))
-        model.add(Dropout(DROPOUT))
+        model.add(Dense(256, activation='relu', kernel_initializer='normal'))
+        # model.add(Dropout(DROPOUT))
+        model.add(Dense(512, activation='relu', kernel_initializer='normal'))
+        # model.add(Dropout(DROPOUT))
+        model.add(Dense(256, activation='relu', kernel_initializer='normal'))
+        # model.add(Dropout(DROPOUT))
         model.add(Dense(5, activation='softmax'))
     
-        """
-        optimizer:
-            sgd: 80+%
-            nadam:90+%
-        层数目前影响不大
-        dropout需要调整
-        l2正则
-
-        """
         # 编译模型
-        epochs_nb = 20
-        learning_rate = 0.5
-        decay_rate = learning_rate / epochs_nb
-        momentum = 0.8
-        SGD(lr=learning_rate, momentum=momentum, decay=decay_rate, nesterov=True)
         Nadam(lr=0.002, beta_1=0.9, beta_2=0.999, epsilon=None, schedule_decay=0.004)
         model.compile(optimizer='nadam',
                     loss='categorical_crossentropy',
@@ -143,20 +124,15 @@ class ModelTraining(object):
         DROPOUT = 0.5
 
         # 2-class 92.334%
-        # model.add(Dense(122, input_dim=x.shape[1], activation='relu', kernel_initializer='normal'))
-        # model.add(Dense(24, input_dim=x.shape[1], activation='relu', kernel_initializer='normal',kernel_regularizer=regularizers.l2(0.01)))
-        # model.add(Dropout(DROPOUT))
-        # model.add(Dense(256, activation='relu', kernel_initializer='normal'))
-        # model.add(Dropout(DROPOUT))
-        # model.add(Dense(64, activation='relu', kernel_initializer='normal'))
-        # model.add(Dropout(DROPOUT))
-        # model.add(Dense(8, activation='relu', kernel_initializer='normal'))
-        # model.add(Dropout(DROPOUT))
-        # model.add(Dense(1, activation='sigmoid'))
-
-        # testing model structure
-        model.add(Dense(16, activation='relu', input_dim=x.shape[1]))
-        model.add(Dense(16, activation='relu'))
+        model.add(Dense(122, input_dim=x.shape[1], activation='relu', kernel_initializer='normal'))
+        model.add(Dense(24, input_dim=x.shape[1], activation='relu', kernel_initializer='normal',kernel_regularizer=regularizers.l2(0.01)))
+        model.add(Dropout(DROPOUT))
+        model.add(Dense(256, activation='relu', kernel_initializer='normal'))
+        model.add(Dropout(DROPOUT))
+        model.add(Dense(64, activation='relu', kernel_initializer='normal'))
+        model.add(Dropout(DROPOUT))
+        model.add(Dense(8, activation='relu', kernel_initializer='normal'))
+        model.add(Dropout(DROPOUT))
         model.add(Dense(1, activation='sigmoid'))
 
         model.compile(optimizer='adam',
@@ -193,13 +169,6 @@ class ModelTraining(object):
         plt.legend()
 
         plt.show()
-        """plt.plot()
-        plt.plot(history['val_acc'])
-        plt.title('model accuracy')
-        plt.ylabel('accuracy')
-        plt.xlabel('epoch')
-        plt.legend(['train', 'test'], loc='upper left')
-        plt.show()"""
         # summarize history for loss
         plt.clf()  # 清除图片                                  
         acc_values = history['acc']
@@ -213,13 +182,6 @@ class ModelTraining(object):
         plt.legend()
 
         plt.show()
-        """plt.plot(history['loss'])
-        plt.plot(history['val_loss'])
-        plt.title('model loss')
-        plt.ylabel('loss')
-        plt.xlabel('epoch')
-        plt.legend(['train', 'test'], loc='upper left')
-        plt.show()"""
 
         trained_model = load_model('model_2_class.h5')  # 加载保存的模型
         print("successfully load trained model: model_2_class.h5")
