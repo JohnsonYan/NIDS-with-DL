@@ -54,7 +54,19 @@ class ModelTraining(object):
         """
         batchsize=[512,256,128,64,32,16,8,1024,2048,4096,8192,16384]
         """
-        batchsize = 16384
+        # batchsize = 512
+        # batchsize = 256
+        # batchsize = 128
+        # batchsize = 64
+        # batchsize = 32
+        # batchsize = 16
+        # batchsize = 8
+        # batchsize = 1024
+        batchsize = 2048
+        # batchsize = 4096
+        # batchsize = 8192
+        # batchsize = 16384
+
         # 训练模型，以 32 个样本为一个 batch 进行迭代
         # history = model.fit(x, y, epochs=epochs_nb, batch_size=batchsize, 
         #             validation_split=0.25, verbose=1,

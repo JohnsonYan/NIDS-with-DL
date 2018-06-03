@@ -45,9 +45,49 @@ class ModelTraining(object):
         """
         optimizer=['Nadam','SGD','RMSprop','Adagrad','Adadelta','Adam','Adamax']
         """
-        model.compile(optimizer='adamax',
+        """
+        1. 优化算法：
+        """
+        model.compile(optimizer='nadam',
                     loss='categorical_crossentropy',
                     metrics=['accuracy'])
+        """
+        2. 优化算法：
+        """
+        # model.compile(optimizer='sgd',
+        #             loss='categorical_crossentropy',
+        #             metrics=['accuracy'])
+        """
+        3. 优化算法：
+        """
+        # model.compile(optimizer='rmsprop',
+        #             loss='categorical_crossentropy',
+        #             metrics=['accuracy'])
+        """
+        4. 优化算法：
+        """
+        # model.compile(optimizer='adagrad',
+        #             loss='categorical_crossentropy',
+        #             metrics=['accuracy'])
+        """
+        5. 优化算法：
+        """
+        # model.compile(optimizer='adadelta',
+        #             loss='categorical_crossentropy',
+        #             metrics=['accuracy'])
+        """
+        6. 优化算法：
+        """
+        # model.compile(optimizer='adam',
+        #             loss='categorical_crossentropy',
+        #             metrics=['accuracy'])
+        """
+        7. 优化算法：
+        """
+        # model.compile(optimizer='adamax',
+        #             loss='categorical_crossentropy',
+        #             metrics=['accuracy'])
+
 
         # define some callback functions
         checkpointer = ModelCheckpoint(filepath="model.h5", verbose=0, save_best_only=True)  # 将模型保存到h5文件
