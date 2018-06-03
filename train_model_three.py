@@ -1,4 +1,7 @@
 #coding=utf-8
+"""
+ModelTraining.start()为设计并训练模型的过程，当前程序修改不同的优化算法以进行不同的实验。
+"""
 import io
 from keras import regularizers
 from keras.utils import plot_model, to_categorical
@@ -37,6 +40,7 @@ class ModelTraining(object):
         model.add(Dense(5, activation='softmax'))
     
         # 编译模型
+        epochs_nb = 20
         Nadam(lr=0.002, beta_1=0.9, beta_2=0.999, epsilon=None, schedule_decay=0.004)
         """
         optimizer=['Nadam','SGD','RMSprop','Adagrad','Adadelta','Adam','Adamax']

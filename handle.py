@@ -1,5 +1,9 @@
-#/usr/bin/python2.7
-#coding:utf-8
+#coding=utf-8
+"""
+该程序的功能：对原始数据进行数据预处理的中间步骤，原始数据存在一些难以批量处理的错误。
+这里手动将这些难以处理的数据进行转换，转换后的数据格式更为统一。
+可以看成是数据预处理的中间步骤。
+"""
 import numpy as np
 import csv
 global staut_list

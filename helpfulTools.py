@@ -1,3 +1,8 @@
+#coding=utf-8
+"""
+为接下来的数据预处理、深度学习模型的训练提供易于使用的一些工具函数。
+"""
+
 from sklearn import preprocessing
 import matplotlib.pyplot as plt
 import numpy as np
@@ -123,25 +128,3 @@ def encode_numeric_range(df, name, normalized_low=-1, normalized_high=1,
     df[name] = ((df[name] - data_low) / (data_high - data_low)) \
                * (normalized_high - normalized_low) + normalized_low
         
-# This function submits an assignment.  You can submit an assignment as much as you like, only the final
-# submission counts.  The paramaters are as follows:
-# data - Pandas dataframe output.
-# key - Your student key that was emailed to you.
-# no - The assignment class number, should be 1 through 1.
-# source_file - The full path to your Python or IPYNB file.  This must have "_class1" as part of its name.  
-# .             The number must match your assignment number.  For example "_class2" for class assignment #2.
-def submit(data,key,no,source_file=None):
-    if source_file is None and '__file__' not in globals(): raise Exception('Must specify a filename when a Jupyter notebook.')
-    if source_file is None: source_file = __file__
-    suffix = '_class{}'.format(no)
-    if suffix not in source_file: raise Exception('{} must be part of the filename.'.format(suffix))
-    with open(source_file, "rb") as image_file:
-        encoded_python = base64.b64encode(image_file.read()).decode('ascii')
-    ext = os.path.splitext(source_file)[-1].lower()
-    if ext not in ['.ipynb','.py']: raise Exception("Source file is {} must be .py or .ipynb".format(ext))
-    r = requests.post("https://api.heatonresearch.com/assignment-submit",
-        headers={'x-api-key':key}, json={'csv':base64.b64encode(data.to_csv(index=False).encode('ascii')).decode("ascii"),
-        'assignment': no, 'ext':ext, 'py':encoded_python})
-    if r.status_code == 200:
-        print("Success: {}".format(r.text))
-    else: print("Failure: {}".format(r.text))

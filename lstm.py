@@ -1,4 +1,7 @@
 #coding=utf-8
+"""
+LSTM等网络模型的测试程序，正在研究中，程序功能尚不完整。
+"""
 import io
 from keras import regularizers
 from keras.utils import plot_model, to_categorical

@@ -1,4 +1,8 @@
 #coding=utf-8
+"""
+ModelTraining.start()中，在读取完训练数据后，将训练数据分开，分别以75%作为训练集，25%作为测试集进行训练和测试。
+与之前的模型训练不同，该程序的训练和测试都是在训练数据上进行的（当然训练和测试数据不会有交叉）。
+"""
 import io
 from keras import regularizers
 from keras.utils import plot_model, to_categorical
@@ -41,6 +45,7 @@ class ModelTraining(object):
         model.add(Dense(5, activation='softmax'))
     
         # 编译模型
+        epochs_nb = 20
         Nadam(lr=0.002, beta_1=0.9, beta_2=0.999, epsilon=None, schedule_decay=0.004)
         model.compile(optimizer='nadam',
                     loss='categorical_crossentropy',

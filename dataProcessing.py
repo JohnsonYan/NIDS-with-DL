@@ -1,4 +1,7 @@
 #coding=utf-8
+"""
+该程序的功能：对原始数据进行数据预处理，把数据处理成深度学习所需要的格式，输出，保存。
+"""
 
 from keras.utils.data_utils import get_file
 import io
