@@ -22,10 +22,17 @@ class ModelTraining(object):
     def __init__(self):
         self.df = pd.read_csv('./dataset/10_percent.csv')
         self.df_test = pd.read_csv('./dataset/test.csv')
+        self.df_test_train = pd.read_csv('./dataset/test_train.csv')
 
     def start(self):
         # Break into X (predictors) & y (prediction)
         x, y = to_xy(self.df,'outcome')
+        """
+        分割一下df，把待测试数据保存起来
+        a,b = train_test_split(self.df, test_size=0.25, random_state=6)
+        b.to_csv("test_train.csv",index=False)
+        """
+        
         # 这里将训练集分开，分为（训练集，测试集）
         x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.25, random_state=6)
         x = x_train
@@ -110,6 +117,7 @@ class ModelTraining(object):
         print('Test accuracy:', score[1])
 
         return history
+        
 
     def start_2_class(self):
         df = pd.read_csv('./dataset/train_2_class.csv')
@@ -204,20 +212,32 @@ class ModelTraining(object):
         x = df.drop([target], axis=1)
         return x,y
 
-    def assessment(self):
+    def assessment(self, modelname):
         # 加载保存的模型
-        trained_model = load_model('model.h5')  
-        print("successfully load trained model: model.h5")
+        trained_model = load_model(modelname)  
+        print("successfully load trained model: ", modelname)
 
         # 加载测试数据
-        test_0 = pd.read_csv('./dataset/0_test.csv')
-        test_1 = pd.read_csv('./dataset/1_test.csv')
-        test_2 = pd.read_csv('./dataset/2_test.csv')
-        test_3 = pd.read_csv('./dataset/3_test.csv')
-        test_4 = pd.read_csv('./dataset/4_test.csv')
+        """
+        测试数据集作为测试数据
+        """
+        # test_0 = pd.read_csv('./dataset/0_test.csv')
+        # test_1 = pd.read_csv('./dataset/1_test.csv')
+        # test_2 = pd.read_csv('./dataset/2_test.csv')
+        # test_3 = pd.read_csv('./dataset/3_test.csv')
+        # test_4 = pd.read_csv('./dataset/4_test.csv')
+        """
+        训练数据集25%作为测试数据
+        """
+        test_0 = pd.read_csv('./dataset/0_train.csv')
+        test_1 = pd.read_csv('./dataset/1_train.csv')
+        test_2 = pd.read_csv('./dataset/2_train.csv')
+        test_3 = pd.read_csv('./dataset/3_train.csv')
+        test_4 = pd.read_csv('./dataset/4_train.csv')
 
         # 分割数据为输入数据和标签数据
-        x_test, y_test = self.split_xy(self.df_test, 'outcome')
+        # x_test, y_test = self.split_xy(self.df_test, 'outcome')
+        x_test, y_test = self.split_xy(self.df_test_train, 'outcome')
         x_test_0, y_test_0 = self.split_xy(test_0, 'outcome')
         x_test_1, y_test_1 = self.split_xy(test_1, 'outcome')
         x_test_2, y_test_2 = self.split_xy(test_2, 'outcome')
@@ -282,6 +302,6 @@ if __name__ == '__main__':
     model = ModelTraining()
     # init_data('/Users/johnson/Downloads/graduation_project/code/dataset/kddcup.data_handled.csv', 'train.csv')
     # init_data('/Users/johnson/Downloads/graduation_project/code/dataset/corrected_handled.csv', 'test.csv')
-    model.start()
+    # model.start()
     # model.start_2_class()
-    # model.assessment()
+    model.assessment('model.h5')
