@@ -32,6 +32,9 @@ class ModelTraining(object):
         model = Sequential()
         DROPOUT = 0.5
 
+        """
+        1. 24-256-512-256-5
+        """
         model.add(Dense(24, input_dim=x.shape[1], activation='relu', kernel_initializer='normal'))
         # model.add(Dropout(DROPOUT))
         # model.add(BatchNormalization())
@@ -42,6 +45,71 @@ class ModelTraining(object):
         model.add(Dense(256, activation='relu', kernel_initializer='normal'))
         # model.add(Dropout(DROPOUT))
         model.add(Dense(5, activation='softmax'))
+        """
+        2. 12-128-256-128-5
+        """
+        # model.add(Dense(12, input_dim=x.shape[1], activation='relu', kernel_initializer='normal'))
+        # model.add(Dense(128, activation='relu', kernel_initializer='normal'))
+        # model.add(Dense(256, activation='relu', kernel_initializer='normal'))
+        # model.add(Dense(128, activation='relu', kernel_initializer='normal'))
+        # model.add(Dense(5, activation='softmax'))
+        """
+        3. 48-512-1024-512-5
+        """
+        # model.add(Dense(48, input_dim=x.shape[1], activation='relu', kernel_initializer='normal'))
+        # model.add(Dense(512, activation='relu', kernel_initializer='normal'))
+        # model.add(Dense(1024, activation='relu', kernel_initializer='normal'))
+        # model.add(Dense(512, activation='relu', kernel_initializer='normal'))
+        # model.add(Dense(5, activation='softmax'))
+        """
+        4. 12-24-48-24-5
+        """
+        # model.add(Dense(12, input_dim=x.shape[1], activation='relu', kernel_initializer='normal'))
+        # model.add(Dense(24, activation='relu', kernel_initializer='normal'))
+        # model.add(Dense(48, activation='relu', kernel_initializer='normal'))
+        # model.add(Dense(24, activation='relu', kernel_initializer='normal'))
+        # model.add(Dense(5, activation='softmax'))
+        """
+        5. 6-12-24-12-5
+        """
+        # model.add(Dense(6, input_dim=x.shape[1], activation='relu', kernel_initializer='normal'))
+        # model.add(Dense(12, activation='relu', kernel_initializer='normal'))
+        # model.add(Dense(24, activation='relu', kernel_initializer='normal'))
+        # model.add(Dense(12, activation='relu', kernel_initializer='normal'))
+        # model.add(Dense(5, activation='softmax'))
+        """
+        6. 3-6-12-6-5
+        """
+        # model.add(Dense(3, input_dim=x.shape[1], activation='relu', kernel_initializer='normal'))
+        # model.add(Dense(6, activation='relu', kernel_initializer='normal'))
+        # model.add(Dense(12, activation='relu', kernel_initializer='normal'))
+        # model.add(Dense(6, activation='relu', kernel_initializer='normal'))
+        # model.add(Dense(5, activation='softmax'))
+        """
+        7. 24-512-256-5
+        """
+        # model.add(Dense(24, input_dim=x.shape[1], activation='relu', kernel_initializer='normal'))
+        # model.add(Dense(512, activation='relu', kernel_initializer='normal'))
+        # model.add(Dense(256, activation='relu', kernel_initializer='normal'))
+        # model.add(Dense(5, activation='softmax'))
+        """
+        8. 24-256-512-256-128-5
+        """
+        # model.add(Dense(24, input_dim=x.shape[1], activation='relu', kernel_initializer='normal'))
+        # model.add(Dense(256, activation='relu', kernel_initializer='normal'))
+        # model.add(Dense(512, activation='relu', kernel_initializer='normal'))
+        # model.add(Dense(256, activation='relu', kernel_initializer='normal'))
+        # model.add(Dense(128, activation='relu', kernel_initializer='normal'))
+        # model.add(Dense(5, activation='softmax'))
+        """
+        9. 10-50-10-5
+        """
+        # model.add(Dense(10, input_dim=x.shape[1], activation='relu', kernel_initializer='normal'))
+        # model.add(Dense(50, activation='relu', kernel_initializer='normal'))
+        # model.add(Dense(10, activation='relu', kernel_initializer='normal'))
+        # model.add(Dense(5, activation='softmax'))
+    
+        
     
         # 编译模型
         epochs_nb = 20
